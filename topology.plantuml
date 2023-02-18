@@ -1,0 +1,22 @@
+@startuml
+nwdiag {
+  network inner {
+      address = "192.168.2.0/24"
+
+      innernode0 [address = "192.168.2.10"];
+      innernode1 [address = "192.168.2.11"];
+      innernode2 [address = "192.168.2.12"];
+
+      middleman [address = "192.168.2.1"];
+  }
+  network outer {
+      address = "192.168.2.0/24";
+
+      outernode0 [address = "192.168.2.10"];
+      outernode1 [address = "192.168.2.11"];
+      outernode2 [address = "192.168.2.12"];
+
+      middleman [address = "192.168.2.1"];
+  }
+}
+@enduml
