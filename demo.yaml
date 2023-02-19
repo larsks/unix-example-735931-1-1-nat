@@ -1,0 +1,134 @@
+- panes: [0,1,2]
+  line_interval: 0
+  after_interval: 0
+  keys:
+    - C-l
+- panes: [0]
+  line_interval: 0
+  after_interval: 0
+  lines:
+    - inmn innernode0
+- panes: [1]
+  line_interval: 0
+  after_interval: 0
+  lines:
+    - inmn middleman
+- panes: [2]
+  line_interval: 0
+  after_interval: 0
+  lines:
+    - inmn outernode0
+- panes: [0,1,2]
+  line_interval: 0
+  after_interval: 0
+  keys:
+    - C-l
+- panes: [1]
+  lines:
+    - "# interface configuration"
+    - ip -br addr show
+    - "# main route table"
+    - ip route show
+    - "# route policy rules"
+    - ip rule show
+- panes: [1]
+  lines:
+    - "# create vrf devices"
+    - ip link add vrf-inner type vrf table 100
+    - ip link add vrf-outer type vrf table 200
+    - ip link set vrf-inner up
+    - ip link set vrf-outer up
+- panes: [1]
+  lines:
+    - "# show vrf policy rule"
+    - ip rule show
+- panes: [1]
+  lines:
+    - "# add interfaces to vrf devices"
+    - ip link set middleman-eth0 master vrf-inner
+    - ip link set middleman-eth1 master vrf-outer
+- panes: [1]
+  lines:
+    - "# main route table is now empty"
+    - ip route show
+    - "# routes for middleman-eth0 are in table 100"
+    - ip route show table 100
+    - "# routes for middleman-eth1 are in table 200"
+    - ip route show table 200
+- panes: [1]
+  lines:
+    - tcpdump -nn -i any icmp
+- panes: [0]
+  lines:
+    - "# ping 192.168.2.1 from innernode0 (this hits middleman-eth0)"
+    - ping -c1 192.168.2.1
+- panes: [2]
+  lines:
+    - "# ping 192.168.2.1 from outernode0 (this hits middleman-eth1)"
+    - ping -c1 192.168.2.1
+- panes: [1]
+  keys:
+    - C-c
+- panes: [0,1,2]
+  line_interval: 0
+  keys:
+    - C-l
+- panes: [0]
+  lines:
+    - "# can't ping 192.168.3.10 because we have no route"
+    - ping -c1 192.168.3.10
+- panes: [0,2]
+  lines:
+    - "# add route to 192.168.3.0/24 via middleman"
+    - ip route add 192.168.3.0/24 via 192.168.2.1
+- panes: [0]
+  lines:
+    - "# can't ping 192.168.3.10 because middleman has no route"
+    - ping -c1 192.168.3.10
+- panes: [1]
+  lines:
+    - "# add NAT rules to middleman"
+    - iptables -t nat -A PREROUTING -d 192.168.3.0/24 -j NETMAP --to 192.168.2.0/24
+    - iptables -t nat -A POSTROUTING -s 192.168.2.0/24 -j NETMAP --to 192.168.3.0/24
+- panes: [1]
+  lines:
+    - tcpdump -nn -i any icmp
+- panes: [0]
+  lines:
+    - "# ping succeeds, but not actually reaching target host"
+    - ping -c1 192.168.3.10
+- panes: [1]
+  keys:
+    - C-c
+- panes: [1]
+  lines:
+    - "# add fwmark rules to netfilter and route policy database"
+    - iptables -t mangle -A PREROUTING -i middleman-eth0 -d 192.168.3.0/24 -j MARK --set-mark 100
+    - iptables -t mangle -A PREROUTING -i middleman-eth1 -d 192.168.3.0/24 -j MARK --set-mark 200
+    - ip rule add prio 100 fwmark 100 lookup 200
+    - ip rule add prio 200 fwmark 200 lookup 100
+- panes: [1,2]
+  lines:
+    - tcpdump -nn -i any icmp
+- panes: [0]
+  lines:
+    - "# ping from innernode0 reaches outernode0"
+    - ping -c1 192.168.3.10
+- panes: [2]
+  keys:
+    - C-c
+- panes: [0]
+  lines:
+    - tcpdump -nn -i any icmp
+- panes: [2]
+  lines:
+    - "# ping from outernode0 reaches innernode0"
+    - ping -c1 192.168.3.10
+- panes: [0,1]
+  keys:
+    - C-c
+
+
+- panes: [0,1,2]
+  keys:
+    - C-d
